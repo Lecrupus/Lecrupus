@@ -1,0 +1,30 @@
+name: refresh profile art
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # daily, 08:47 IST
+  workflow_dispatch:
+  push:
+    paths: ["tools/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Redraw SVGs
+        run: python tools/gen_assets.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets
+          git diff --cached --quiet || (git commit -m "chore: redraw profile art" && git push)

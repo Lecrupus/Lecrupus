@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" role="img" aria-label="Journal: experience"><title>Journal: experience</title><defs>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+  <feGaussianBlur stdDeviation="3" result="b"/>
+  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="bigglow" x="-100%" y="-100%" width="300%" height="300%">
+  <feGaussianBlur stdDeviation="9"/>
+</filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+  <feColorMatrix in="n" type="matrix" values="0 0 0 0 .6  0 0 0 0 .7  0 0 0 0 .9  0 0 0 .05 0"/>
+</filter>
+<radialGradient id="lanternlight"><stop offset="0" stop-color="#f4c76e" stop-opacity=".55"/>
+  <stop offset="1" stop-color="#f4c76e" stop-opacity="0"/></radialGradient>
+<radialGradient id="soullight"><stop offset="0" stop-color="#a6ecff" stop-opacity=".5"/>
+  <stop offset="1" stop-color="#a6ecff" stop-opacity="0"/></radialGradient>
+<style>
+@keyframes rise1{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}100%{transform:translate(18px,-260px);opacity:0}}
+@keyframes rise2{0%{transform:translate(0,0);opacity:0}20%{opacity:.7}100%{transform:translate(-22px,-300px);opacity:0}}
+@keyframes rise3{0%{transform:translate(0,0);opacity:0}10%{opacity:.8}100%{transform:translate(6px,-220px);opacity:0}}
+@keyframes flicker{0%,100%{opacity:.85}12%{opacity:.6}20%{opacity:.95}48%{opacity:.7}60%{opacity:1}80%{opacity:.75}}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes blink{0%,45%{opacity:1}50%,95%{opacity:.15}100%{opacity:1}}
+@keyframes eyes{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes drift{0%{transform:translateX(0)}100%{transform:translateX(-1200px)}}
+.fl{animation:flicker 3.2s infinite}
+.sw{transform-box:fill-box;transform-origin:50% 0;animation:sway 6s ease-in-out infinite}
+.pu{transform-box:fill-box;transform-origin:center;animation:pulse 2.8s ease-in-out infinite}
+.bl{animation:blink 2.4s infinite}
+.ey{transform-box:fill-box;transform-origin:center;animation:eyes 5s infinite}
+</style></defs><rect x=".5" y=".5" width="1199" height="249" rx="14" fill="#080d1a" stroke="#17213a"/><line x1="70" y1="40" x2="70" y2="210" stroke="#2a3858" stroke-width="1.4" stroke-dasharray="2 6"/><path d="M70,52 L80,62 L70,72 L60,62 Z" fill="#79c99b" stroke="#79c99b" stroke-width="1.4"/><text x="104" y="69" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="22" fill="#e9eef6" text-anchor="start" font-weight="600" letter-spacing="1" >Machine Learning Engineer Intern</text><text x="580.4" y="68" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="17" fill="#8a9bb8" text-anchor="start" font-weight="400" letter-spacing="0" font-style="italic">— Trialshopy</text><text x="1140" y="68" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="13" fill="#79c99b" text-anchor="end" font-weight="400" letter-spacing="3" >QUEST COMPLETE</text><line x1="104" y1="92" x2="1140" y2="92" stroke="#17213a"/><path d="M70,116 L80,126 L70,136 L60,126 Z" fill="#79c99b" stroke="#79c99b" stroke-width="1.4"/><text x="104" y="133" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="22" fill="#e9eef6" text-anchor="start" font-weight="600" letter-spacing="1" >Data Scientist Intern</text><text x="424.2" y="132" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="17" fill="#8a9bb8" text-anchor="start" font-weight="400" letter-spacing="0" font-style="italic">— Prodigy Infotech</text><text x="1140" y="132" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="13" fill="#79c99b" text-anchor="end" font-weight="400" letter-spacing="3" >QUEST COMPLETE</text><line x1="104" y1="156" x2="1140" y2="156" stroke="#17213a"/><path d="M70,180 L80,190 L70,200 L60,190 Z" fill="#080d1a" stroke="#f4c76e" stroke-width="1.4" class="bl"/><text x="104" y="197" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="22" fill="#8a9bb8" text-anchor="start" font-weight="600" letter-spacing="1" >Your team here?</text><text x="339.0" y="196" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="17" fill="#8a9bb8" text-anchor="start" font-weight="400" letter-spacing="0" font-style="italic">— an open slot in the party</text><text x="1140" y="196" font-family="'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="13" fill="#f4c76e" text-anchor="end" font-weight="400" letter-spacing="3" >SEND A RAVEN  ↓</text></svg>
