@@ -37,7 +37,7 @@
 </details>
 
 <a id="relics"></a>
-<a href="https://leetcode.com/u/lecrupusgod/"><img src="./assets/relics.svg" width="100%" alt="LeetCode max rating 1839 with 750+ problems solved. Codeforces Expert, max 1605. CodeChef 3 star, max 1621. Amazon ML Summer School 2026, top 1.8%. Google Big Code 2026, top 1,500 globally. Meta × PyTorch OpenEnv hackathon grand finale. NIT Patna CSE '27, CGPA 8.17." /></a>
+<a href="https://leetcode.com/u/lecrupusgod/"><img src="./assets/relics.svg" width="100%" alt="LeetCode max rating 1854 with 750+ problems solved. Codeforces Expert, max 1605. CodeChef 3 star, max 1621. Amazon ML Summer School 2026, top 1.8%. Google Big Code 2026, top 1,500 globally. Meta × PyTorch OpenEnv hackathon grand finale. NIT Patna CSE '27, CGPA 8.17." /></a>
 
 <p align="center"><b>Duel me:</b> &nbsp;
 <a href="https://leetcode.com/u/lecrupusgod/">LeetCode</a> &nbsp;·&nbsp;

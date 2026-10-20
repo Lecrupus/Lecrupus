@@ -422,7 +422,7 @@ def relics():
     H = 600
     b = hollow(20, 10, W - 20, H - 10, 51, FIELD["relics"])
     b += f'<circle cx="250" cy="290" r="200" fill="url(#pool)" opacity=".35" class="fl"/>'
-    b += text(64, 320, "1839", 190, INK, weight="600")
+    b += text(64, 320, "1854", 190, INK, weight="600")
     b += text(72, 384, "LeetCode, max rating.", 24, LANTERN)
     b += text(72, 422, "750+ problems solved.", 22, DIM)
     rows = [("Codeforces Expert", "max rating 1605"),
@@ -435,7 +435,7 @@ def relics():
         y = 96 + i * 82
         b += text(640, y, big, 32, INK, weight="600") + text(642, y + 32, small, 21, DIM)
     b += spores(10, 40, W - 40, 100, H - 20, 52, (LANTERN, INK))
-    write("relics.svg", svg(H, b, "Relics: LeetCode 1839, Codeforces Expert 1605, CodeChef 3 star, Amazon MLSS 2026, "
+    write("relics.svg", svg(H, b, "Relics: LeetCode 1854, Codeforces Expert 1605, CodeChef 3 star, Amazon MLSS 2026, "
                                   "Google Big Code 2026, Meta PyTorch OpenEnv finalist, NIT Patna CGPA 8.17"))
 
 
