@@ -226,7 +226,7 @@ def hero():
     b += text(64, 372, "Sharma", 132, INK, weight="600")
     b += text(68, 448, "The deeper the system,", 30, LANTERN)
     b += text(68, 490, "the brighter the lantern.", 30, LANTERN)
-    b += text(68, 548, "ML and distributed systems · NIT Patna, CSE '27", 22, DIM)
+    b += text(68, 548, "NIT Patna, CSE '27", 22, DIM)
     write("hero.svg", svg(H, b, "Suryansh Sharma. The deeper the system, the brighter the lantern."))
 
 
