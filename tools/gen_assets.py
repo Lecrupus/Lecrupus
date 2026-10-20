@@ -3,9 +3,13 @@
     python tools/gen_assets.py            # uses GITHUB_TOKEN if set, else unauthenticated API
     python tools/gen_assets.py --offline  # skip the API, use the fallback numbers below
 
-All art is drawn here in raw SVG: no images, no external fonts, no third-party widgets.
-The inventory panel (language essence) is the only part that reads live data; the
-daily workflow in .github/workflows/refresh.yml reruns this script to keep it current.
+The README is one descent through a cave. GitHub's dark background is the rock; every panel is
+a hollow carved into it, so the panels join into one continuous cross-section. Each project
+chamber animates the project's real mechanism: Raft leader election, agents writing to a shared
+memory graph, an order passing a risk gate into an order book.
+
+All art is raw SVG: no raster images, no external fonts, no third-party widgets. The "carried"
+panel's language bar is the only live data; .github/workflows/refresh.yml reruns this daily.
 """
 
 import json
@@ -18,40 +22,38 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 USER = "Lecrupus"
-ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ROOT / "assets"
+ASSETS = Path(__file__).resolve().parent.parent / "assets"
 W = 1200
 
-# ── palette ──────────────────────────────────────────────────────────────────
-ABYSS = "#04060c"
-DEEP = "#080d1a"
-STONE = "#0e1527"
-SLATE = "#17213a"
-INK = "#2a3858"
-MIST = "#8a9bb8"
-BONE = "#e9eef6"
-SOUL = "#a6ecff"
-LANTERN = "#f4c76e"
-EMBER = "#ff9a52"
-MOSS = "#79c99b"
-VIOLET = "#9d8cf0"
+# ── palette: one ground (the rock), one ink, one accent (lantern light) ─────────────────────────
+ROCK = "#0d1117"       # GitHub's dark background, so panel edges vanish into the page
+INK = "#ece6da"        # bone
+DIM = "#9aa3ad"        # secondary notes only
+LANTERN = "#f2bd5c"    # the accent: leaders, the hero claim, the resting lantern
+SOUL = "#8fd8e8"       # follower lights, spores
+MOSS = "#7cc79a"       # bids, approvals
+EMBER = "#ef7d55"      # asks, rejections
 
-SERIF = "'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif"
-BODY = "'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif"
-ITALIC = 'font-style="italic"'
+# One flat field per depth: the deeper the chamber, the warmer and darker the stone.
+FIELD = {"surface": "#101b2c", "raft": "#0f1d22", "hive": "#1b150d", "desk": "#0f1a14",
+         "relics": "#15161c", "carry": "#111a22", "rest": "#0f1726"}
+STEP = {"surface": "#16243a", "raft": "#15282f", "hive": "#271e12", "desk": "#16251c",
+        "relics": "#1d1e26", "carry": "#18232d", "rest": "#16203a"}
 
-# Fallback for --offline / API failure (bytes, measured 2026-10-20, notebooks + markup excluded).
+FACE = "'Palatino Linotype','Book Antiqua',Palatino,'URW Palladio L','TeX Gyre Pagella',Georgia,serif"
+
 FALLBACK_LANGS = {"Python": 432350, "JavaScript": 244953, "Go": 92392, "C++": 58222,
                   "Dockerfile": 9011, "Shell": 5978}
-FALLBACK_REPOS = 26
+FALLBACK_REPOS = 25
 SKIP_LANGS = {"Jupyter Notebook", "HTML", "CSS", "Batchfile", "PowerShell", "Makefile"}
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
-def svg(width, height, body, title):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-            f'viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">'
-            f'<title>{escape(title)}</title>{body}</svg>\n')
+# ── helpers ──────────────────────────────────────────────────────────────────────────────────────
+def svg(height, body, title, css=""):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{height}" '
+            f'viewBox="0 0 {W} {height}" role="img" aria-label="{escape(title)}">'
+            f'<title>{escape(title)}</title><defs>{DEFS}<style>{CSS}{css}</style></defs>'
+            f'<rect width="{W}" height="{height}" fill="{ROCK}"/>{body}</svg>\n')
 
 
 def write(name, content):
@@ -59,171 +61,122 @@ def write(name, content):
     print(f"  wrote assets/{name}  ({len(content) // 1024} KB)")
 
 
-def t(x, y, s, size, fill=BONE, family=SERIF, anchor="middle", weight="400", spacing=0,
-      extra=""):
-    return (f'<text x="{x}" y="{y}" font-family="{family}" font-size="{size}" fill="{fill}" '
-            f'text-anchor="{anchor}" font-weight="{weight}" letter-spacing="{spacing}" '
-            f'{extra}>{escape(s)}</text>')
+def text(x, y, s, size, fill=INK, anchor="start", weight="400", italic=False, extra=""):
+    style = ' font-style="italic"' if italic else ""
+    track = ' letter-spacing="-1"' if size >= 60 else ""
+    return (f'<text x="{x}" y="{y}" font-family="{FACE}" font-size="{size}" fill="{fill}" '
+            f'text-anchor="{anchor}" font-weight="{weight}"{style}{track} {extra}>{escape(s)}</text>')
 
 
-def defs_common():
-    return f"""
-<filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-  <feGaussianBlur stdDeviation="3" result="b"/>
-  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-</filter>
-<filter id="bigglow" x="-100%" y="-100%" width="300%" height="300%">
-  <feGaussianBlur stdDeviation="9"/>
-</filter>
-<filter id="grain" x="0" y="0" width="100%" height="100%">
-  <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
-  <feColorMatrix in="n" type="matrix" values="0 0 0 0 .6  0 0 0 0 .7  0 0 0 0 .9  0 0 0 .05 0"/>
-</filter>
-<radialGradient id="lanternlight"><stop offset="0" stop-color="{LANTERN}" stop-opacity=".55"/>
-  <stop offset="1" stop-color="{LANTERN}" stop-opacity="0"/></radialGradient>
-<radialGradient id="soullight"><stop offset="0" stop-color="{SOUL}" stop-opacity=".5"/>
-  <stop offset="1" stop-color="{SOUL}" stop-opacity="0"/></radialGradient>
+def lines(x, y, rows, size, fill=INK, lead=1.5, **kw):
+    return "".join(text(x, y + i * size * lead, r, size, fill, **kw) for i, r in enumerate(rows))
+
+
+# Light is the one thing allowed to glow: it is what a cave has instead of decoration.
+DEFS = f"""
+<filter id="light" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.4" result="b"/>
+<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="pool"><stop offset="0" stop-color="{LANTERN}" stop-opacity=".42"/><stop offset="1" stop-color="{LANTERN}" stop-opacity="0"/></radialGradient>
+<radialGradient id="coldpool"><stop offset="0" stop-color="{SOUL}" stop-opacity=".35"/><stop offset="1" stop-color="{SOUL}" stop-opacity="0"/></radialGradient>
 """
 
-
-def css_common():
-    return """
-@keyframes rise1{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}100%{transform:translate(18px,-260px);opacity:0}}
-@keyframes rise2{0%{transform:translate(0,0);opacity:0}20%{opacity:.7}100%{transform:translate(-22px,-300px);opacity:0}}
-@keyframes rise3{0%{transform:translate(0,0);opacity:0}10%{opacity:.8}100%{transform:translate(6px,-220px);opacity:0}}
-@keyframes flicker{0%,100%{opacity:.85}12%{opacity:.6}20%{opacity:.95}48%{opacity:.7}60%{opacity:1}80%{opacity:.75}}
+CSS = """
+@keyframes rise1{0%{transform:translate(0,0);opacity:0}15%{opacity:.85}100%{transform:translate(14px,-240px);opacity:0}}
+@keyframes rise2{0%{transform:translate(0,0);opacity:0}20%{opacity:.6}100%{transform:translate(-18px,-280px);opacity:0}}
+@keyframes flicker{0%,100%{opacity:.9}14%{opacity:.62}22%{opacity:.96}50%{opacity:.72}63%{opacity:1}81%{opacity:.78}}
 @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-@keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
-@keyframes blink{0%,45%{opacity:1}50%,95%{opacity:.15}100%{opacity:1}}
-@keyframes eyes{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-@keyframes drift{0%{transform:translateX(0)}100%{transform:translateX(-1200px)}}
-.fl{animation:flicker 3.2s infinite}
-.sw{transform-box:fill-box;transform-origin:50% 0;animation:sway 6s ease-in-out infinite}
-.pu{transform-box:fill-box;transform-origin:center;animation:pulse 2.8s ease-in-out infinite}
-.bl{animation:blink 2.4s infinite}
-.ey{transform-box:fill-box;transform-origin:center;animation:eyes 5s infinite}
+@keyframes blinkeyes{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes breathe{0%,100%{opacity:.45}50%{opacity:1}}
+.fl{animation:flicker 3.4s infinite}
+.sw{transform-box:fill-box;transform-origin:50% 0;animation:sway 7s ease-in-out infinite}
+.ey{transform-box:fill-box;transform-origin:center;animation:blinkeyes 6s infinite}
+.br{animation:breathe 3s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
 """
 
 
-def spores(n, x0, x1, y0, y1, seed, colors=(SOUL, SOUL, BONE, LANTERN)):
+def hollow(x0, y0, x1, y1, seed, fill, roof=26, floor=16):
+    """A cave pocket: stalactite roof, uneven walls, rubble floor. Returns a closed path."""
+    rnd = random.Random(seed)
+    pts = []
+    x = x0
+    while x < x1:  # roof, left to right
+        if rnd.random() < .18:
+            pts += [(x, y0 + rnd.uniform(0, 8)), (x + 9, y0 + rnd.uniform(roof * 1.4, roof * 2.6)),
+                    (x + 18, y0 + rnd.uniform(0, 8))]
+            x += 18
+        else:
+            pts.append((x, y0 + rnd.uniform(0, roof * .55)))
+        x += rnd.uniform(22, 46)
+    y = y0
+    while y < y1:  # right wall, downwards
+        pts.append((x1 - rnd.uniform(0, 14), y))
+        y += rnd.uniform(40, 80)
+    x = x1
+    while x > x0:  # floor, right to left
+        pts.append((x, y1 - rnd.uniform(0, floor)))
+        x -= rnd.uniform(26, 60)
+    y = y1
+    while y > y0:  # left wall, upwards
+        pts.append((x0 + rnd.uniform(0, 14), y))
+        y -= rnd.uniform(40, 80)
+    return f'<path d="M{" L".join(f"{px:.0f},{py:.0f}" for px, py in pts)} Z" fill="{fill}"/>'
+
+
+def spores(n, x0, x1, y0, y1, seed, colors=(SOUL, SOUL, INK, LANTERN)):
     rnd = random.Random(seed)
     out = []
     for _ in range(n):
-        x, y = rnd.uniform(x0, x1), rnd.uniform(y0, y1)
-        r = rnd.choice((1, 1.2, 1.5, 1.8, 2.4))
-        dur = rnd.uniform(7, 16)
-        out.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}" fill="{rnd.choice(colors)}" '
-                   f'filter="url(#glow)" style="animation:rise{rnd.randint(1, 3)} {dur:.1f}s '
-                   f'linear {-rnd.uniform(0, dur):.1f}s infinite"/>')
+        dur = rnd.uniform(8, 17)
+        out.append(f'<circle cx="{rnd.uniform(x0, x1):.0f}" cy="{rnd.uniform(y0, y1):.0f}" '
+                   f'r="{rnd.choice((1, 1.3, 1.6, 2.1))}" fill="{rnd.choice(colors)}" filter="url(#light)" '
+                   f'style="animation:rise{rnd.randint(1, 2)} {dur:.1f}s linear {-rnd.uniform(0, dur):.1f}s infinite"/>')
     return "".join(out)
 
 
-def jagged(width, base, amp, step, seed, top):
-    """Stalactite (top=True) or rock-floor silhouette as a closed path."""
-    rnd = random.Random(seed)
-    edge = 0 if top else 9999
-    pts, x = [], 0
-    while x <= width + step:
-        spike = rnd.random() < .22
-        d = rnd.uniform(.2, 1) * amp * (2.4 if spike else 1)
-        y = base + d if top else base - d
-        if spike and top:
-            pts += [(x - step * .25, base + amp * .3), (x, y), (x + step * .25, base + amp * .3)]
-        else:
-            pts.append((x, y))
-        x += step * rnd.uniform(.6, 1.4)
-    edge = 0 if top else 2000
-    path = f"M0,{edge} " + " ".join(f"L{px:.0f},{py:.0f}" for px, py in pts)
-    return path + f" L{width},{edge} Z"
-
-
-def blob(cx, cy, rx, ry, seed, n=11):
-    """Irregular closed region (Catmull-Rom smoothed) for the map."""
-    rnd = random.Random(seed)
-    pts = []
-    for i in range(n):
-        a = 2 * math.pi * i / n
-        k = rnd.uniform(.78, 1.12)
-        pts.append((cx + math.cos(a) * rx * k, cy + math.sin(a) * ry * k))
-    d = f"M{pts[0][0]:.1f},{pts[0][1]:.1f}"
-    for i in range(n):
-        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]
-        c1 = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)
-        c2 = (p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)
-        d += f" C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}"
-    return d + "Z"
-
-
-def flourish(cx, cy, half, color=MIST, title=None):
-    """Ornate horizontal divider: fading rules, curls and a centre diamond."""
-    g = f"""
-<linearGradient id="fadeL{cy}" x1="1" x2="0"><stop offset="0" stop-color="{color}"/><stop offset="1" stop-color="{color}" stop-opacity="0"/></linearGradient>
-<linearGradient id="fadeR{cy}" x1="0" x2="1"><stop offset="0" stop-color="{color}"/><stop offset="1" stop-color="{color}" stop-opacity="0"/></linearGradient>"""
-    gap = 26 if title is None else len(title) * 13 + 70
-    out = f"<defs>{g}</defs>"
-    out += (f'<path d="M{cx - gap},{cy} L{cx - half},{cy}" stroke="url(#fadeL{cy})" stroke-width="1.2"/>'
-            f'<path d="M{cx + gap},{cy} L{cx + half},{cy}" stroke="url(#fadeR{cy})" stroke-width="1.2"/>')
-    for s in (-1, 1):
-        x = cx + s * gap
-        out += (f'<path d="M{x},{cy} c{s * 18},-14 {s * 40},-10 {s * 46},0 '
-                f'c{s * 4},8 {s * -8},12 {s * -14},6" fill="none" stroke="{color}" stroke-width="1.2"/>'
-                f'<path d="M{x},{cy} c{s * 18},14 {s * 40},10 {s * 46},0" fill="none" stroke="{color}" '
-                f'stroke-width="1.2" opacity=".6"/>'
-                f'<circle cx="{x + s * 74}" cy="{cy}" r="2" fill="{color}"/>')
-    if title is None:
-        out += (f'<path d="M{cx},{cy - 9} L{cx + 9},{cy} L{cx},{cy + 9} L{cx - 9},{cy} Z" fill="none" '
-                f'stroke="{BONE}" stroke-width="1.3"/><circle cx="{cx}" cy="{cy}" r="2.4" fill="{SOUL}" '
-                f'filter="url(#glow)" class="pu"/>')
-    else:
-        out += t(cx, cy + 9, title, 26, BONE, SERIF, spacing=8, weight="600")
-    return out
-
-
-def wanderer(x, y, s=1.0):
-    """Original hooded lantern-bearer (not any existing game character)."""
+def wanderer(x, y, s=1.0, seated=False):
+    """An original hooded lantern-bearer."""
+    legs = ('<path d="M-22,26 C-10,30 14,30 30,22 L30,31 L-24,31 Z" fill="#090d18"/>' if seated else "")
     return f"""
 <g transform="translate({x},{y}) scale({s})">
-  <circle cx="26" cy="-46" r="70" fill="url(#lanternlight)" class="fl"/>
-  <path d="M0,-40 C-15,-37 -21,-8 -23,20 L-28,31 L-8,27 L0,32 L9,27 L28,31 L23,20 C21,-8 15,-37 0,-40 Z" fill="#0b1122" stroke="{INK}" stroke-width="1.2"/>
-  <path d="M-14,-27 C-15,-52 15,-52 14,-27 C13,-15 -13,-15 -14,-27 Z" fill="#111a31" stroke="{INK}" stroke-width="1.2"/>
-  <ellipse cx="0" cy="-26" rx="8.5" ry="7.5" fill="#010208"/>
-  <g class="ey"><ellipse cx="-3.6" cy="-27" rx="1.7" ry="2.3" fill="{SOUL}" filter="url(#glow)"/>
-  <ellipse cx="3.6" cy="-27" rx="1.7" ry="2.3" fill="{SOUL}" filter="url(#glow)"/></g>
-  <line x1="17" y1="31" x2="23" y2="-56" stroke="#4a3a2a" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M23,-56 q8,-2 9,6" fill="none" stroke="#4a3a2a" stroke-width="2"/>
+  <circle cx="30" cy="-46" r="80" fill="url(#pool)" class="fl"/>
+  {legs}
+  <path d="M0,-40 C-15,-37 -21,-8 -23,20 L-28,31 L-8,27 L0,32 L9,27 L28,31 L23,20 C21,-8 15,-37 0,-40 Z" fill="#090d18"/>
+  <path d="M-14,-27 C-15,-52 15,-52 14,-27 C13,-15 -13,-15 -14,-27 Z" fill="#0c1222"/>
+  <ellipse cx="0" cy="-26" rx="8.5" ry="7.5" fill="#010207"/>
+  <g class="ey"><ellipse cx="-3.6" cy="-27" rx="1.7" ry="2.3" fill="{SOUL}" filter="url(#light)"/>
+  <ellipse cx="3.6" cy="-27" rx="1.7" ry="2.3" fill="{SOUL}" filter="url(#light)"/></g>
+  <line x1="17" y1="31" x2="23" y2="-56" stroke="#3d3022" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M23,-56 q8,-2 9,6" fill="none" stroke="#3d3022" stroke-width="2.2"/>
   <g class="sw" style="transform-origin:32px -50px">
-    <line x1="32" y1="-50" x2="32" y2="-44" stroke="{MIST}" stroke-width="1"/>
-    <path d="M27,-44 h10 l-1.5,12 h-7 Z" fill="{LANTERN}" opacity=".9" class="fl" filter="url(#glow)"/>
-    <path d="M26,-44 h12 M27,-32 h10" stroke="#5b4630" stroke-width="1.6"/>
+    <line x1="32" y1="-50" x2="32" y2="-44" stroke="{DIM}" stroke-width="1"/>
+    <path d="M27,-44 h10 l-1.5,12 h-7 Z" fill="{LANTERN}" class="fl" filter="url(#light)"/>
+    <path d="M26,-44 h12 M27,-32 h10" stroke="#5b4630" stroke-width="1.8"/>
   </g>
 </g>"""
 
 
-def vine(x, length, seed, bulb=True):
+def vine(x, top, length, seed, bulb=True):
     rnd = random.Random(seed)
-    pts, y = [], 0
-    d = f"M{x},0"
-    while y < length:
-        y2 = min(length, y + rnd.uniform(18, 30))
+    d, y = f"M{x},{top}", top
+    while y < top + length:
+        y2 = min(top + length, y + rnd.uniform(18, 30))
         d += f" Q{x + rnd.uniform(-8, 8):.0f},{(y + y2) / 2:.0f} {x + rnd.uniform(-3, 3):.0f},{y2:.0f}"
         y = y2
-    out = (f'<g class="sw" style="animation-duration:{rnd.uniform(5, 9):.1f}s;'
-           f'animation-delay:-{rnd.uniform(0, 5):.1f}s">'
-           f'<path d="{d}" fill="none" stroke="#1d2a47" stroke-width="2"/>')
+    out = (f'<g class="sw" style="animation-duration:{rnd.uniform(5, 9):.1f}s;animation-delay:-{rnd.uniform(0, 5):.1f}s">'
+           f'<path d="{d}" fill="none" stroke="#1c2a3e" stroke-width="2.2"/>')
     if bulb:
-        out += (f'<circle cx="{x}" cy="{length + 6}" r="16" fill="url(#soullight)" class="fl"/>'
-                f'<circle cx="{x}" cy="{length + 6}" r="4" fill="{SOUL}" filter="url(#glow)"/>')
+        out += (f'<circle cx="{x}" cy="{top + length + 6}" r="18" fill="url(#coldpool)" class="fl"/>'
+                f'<circle cx="{x}" cy="{top + length + 6}" r="4" fill="{SOUL}" filter="url(#light)"/>')
     return out + "</g>"
 
 
-# ── live data ────────────────────────────────────────────────────────────────
+# ── live data ────────────────────────────────────────────────────────────────────────────────────
 def api(path):
     req = urllib.request.Request(f"https://api.github.com{path}",
-                                 headers={"Accept": "application/vnd.github+json",
-                                          "User-Agent": "lecrupus-profile"})
-    tok = os.environ.get("GITHUB_TOKEN")
-    if tok:
-        req.add_header("Authorization", f"Bearer {tok}")
+                                 headers={"Accept": "application/vnd.github+json", "User-Agent": "lecrupus-profile"})
+    if os.environ.get("GITHUB_TOKEN"):
+        req.add_header("Authorization", f"Bearer {os.environ['GITHUB_TOKEN']}")
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.load(r)
 
@@ -244,344 +197,303 @@ def fetch_stats(offline):
         return FALLBACK_LANGS, FALLBACK_REPOS
 
 
-# ── panels ───────────────────────────────────────────────────────────────────
+# ── the surface: who, and the claim the chambers prove ───────────────────────────────────────────
 def hero():
-    H = 480
+    H = 600
     rnd = random.Random(3)
-    body = f"<defs>{defs_common()}"
-    body += f"""
-<radialGradient id="sky" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#16233f"/>
-  <stop offset=".55" stop-color="{DEEP}"/><stop offset="1" stop-color="{ABYSS}"/></radialGradient>
-<linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{SOUL}" stop-opacity="0"/>
-  <stop offset="1" stop-color="{SOUL}" stop-opacity=".07"/></linearGradient>
-<style>{css_common()}
-.title{{filter:url(#glow)}}
-</style></defs>"""
-    body += f'<rect width="{W}" height="{H}" fill="url(#sky)"/>'
-    # distant pillars of a ruined city
-    for i in range(14):
-        x = 40 + i * 86 + rnd.uniform(-20, 20)
-        h = rnd.uniform(120, 260)
-        w = rnd.uniform(16, 34)
-        body += (f'<rect x="{x:.0f}" y="{H - 90 - h:.0f}" width="{w:.0f}" height="{h:.0f}" fill="#0d1630" opacity=".8"/>'
-                 f'<path d="M{x - 6:.0f},{H - 90 - h:.0f} h{w + 12:.0f} l-{(w + 12) / 2:.0f},-{rnd.uniform(14, 40):.0f} Z" fill="#0d1630" opacity=".8"/>')
-        if rnd.random() < .45:
-            body += (f'<rect x="{x + w / 2 - 2:.0f}" y="{H - 70 - h:.0f}" width="4" height="7" fill="{LANTERN}" '
-                     f'opacity=".55" class="fl" style="animation-delay:-{rnd.uniform(0, 3):.1f}s"/>')
-    body += f'<rect y="{H - 200}" width="{W}" height="200" fill="url(#fog)"/>'
-    body += f'<path d="{jagged(W, 70, 26, 34, 11, True)}" fill="#0b1226"/>'
-    body += f'<path d="{jagged(W, 38, 20, 26, 12, True)}" fill="{ABYSS}"/>'
-    body += f'<path d="{jagged(W, H - 46, 18, 40, 13, False)}" fill="#0a1022"/>'
-    body += f'<path d="{jagged(W, H - 22, 14, 30, 14, False)}" fill="{ABYSS}"/>'
-    for i, (x, ln) in enumerate([(120, 70), (190, 120), (980, 95), (1060, 60), (1110, 140), (330, 50)]):
-        body += vine(x, ln, 40 + i, bulb=i % 2 == 0 or ln > 100)
-    body += spores(46, 0, W, 120, H, 5)
-    # title block
-    cx = W / 2
-    body += t(cx, 150, "~  A TALE OF CODE AND CONSENSUS  ~", 15, MIST, SERIF, spacing=5)
-    body += (f'<g class="title">{t(cx, 228, "SURYANSH SHARMA", 70, BONE, SERIF, spacing=10, weight="600")}</g>')
-    body += flourish(cx, 262, 330)
-    body += t(cx, 306, "Machine Learning  ·  Distributed Systems  ·  Multi-Agent Infrastructure", 21,
-              "#c9d4e6", BODY, spacing=1.2)
-    body += t(cx, 338, "NIT PATNA  —  COMPUTER SCIENCE  '27", 14, MIST, SERIF, spacing=4)
-    body += f'<g class="bl">{t(cx, 404, "—  PRESS START  —", 15, LANTERN, SERIF, spacing=6)}</g>'
-    body += wanderer(150, H - 62, 1.25)
-    body += f'<rect width="{W}" height="{H}" filter="url(#grain)"/>'
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{SLATE}"/>'
-    write("hero.svg", svg(W, H, body, "Suryansh Sharma — a tale of code and consensus"))
+    b = hollow(0, 0, W, H - 20, 1, FIELD["surface"], roof=30, floor=10)
+    # far city: flat silhouettes, two tone steps, lit windows
+    for layer, (tone, base, hmin, hmax) in enumerate([(STEP["surface"], H - 150, 140, 300),
+                                                      ("#13203a", H - 120, 80, 200)]):
+        x = 560 + layer * 30
+        while x < W:
+            w, h = rnd.uniform(18, 40), rnd.uniform(hmin, hmax)
+            b += (f'<rect x="{x:.0f}" y="{base - h:.0f}" width="{w:.0f}" height="{h + 160:.0f}" fill="{tone}"/>'
+                  f'<path d="M{x - 5:.0f},{base - h:.0f} h{w + 10:.0f} l-{(w + 10) / 2:.0f},-{rnd.uniform(16, 46):.0f} Z" fill="{tone}"/>')
+            for _ in range(rnd.randint(0, 2)):
+                b += (f'<rect x="{x + rnd.uniform(4, w - 8):.0f}" y="{base - h + rnd.uniform(20, h * .7):.0f}" width="4" height="7" '
+                      f'fill="{LANTERN}" opacity=".7" class="fl" style="animation-delay:-{rnd.uniform(0, 3):.1f}s"/>')
+            x += w + rnd.uniform(14, 46)
+    # the ledge the wanderer stands on, and the shaft that drops into the next panel
+    b += f'<path d="M380,{H} C480,{H - 30} 560,{H - 100} 700,{H - 112} C820,{H - 120} 900,{H - 104} 1000,{H - 112} L1000,{H} Z" fill="{ROCK}"/>'
+    b += f'<path d="M990,{H} L990,{H - 112} C1060,{H - 118} 1130,{H - 96} 1200,{H - 104} L1200,{H} Z" fill="{ROCK}"/>'
+    for i, (x, top, ln) in enumerate([(610, 20, 70), (680, 24, 130), (1090, 18, 90), (1150, 22, 150), (860, 16, 50)]):
+        b += vine(x, top, ln, 40 + i, bulb=ln > 60)
+    b += spores(36, 520, W, 140, H - 60, 5)
+    b += wanderer(900, H - 146, 1.5)
+    # left column: the name, set very large; one claim; one line of who
+    b += text(64, 236, "Suryansh", 132, INK, weight="600")
+    b += text(64, 372, "Sharma", 132, INK, weight="600")
+    b += text(68, 448, "I build systems that agree,", 30, LANTERN)
+    b += text(68, 490, "remember and trade.", 30, LANTERN)
+    b += text(68, 548, "ML and distributed systems · NIT Patna, CSE '27", 22, DIM)
+    write("hero.svg", svg(H, b, "Suryansh Sharma. I build systems that agree, remember and trade."))
 
 
-def header(name, title):
-    H = 70
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += flourish(W / 2, 36, 520, MIST, title)
-    write(f"title-{name}.svg", svg(W, H, body, title))
+# ── chamber one: RaftKV, five nodes electing a leader ───────────────────────────────────────────
+RAFT_CSS = """
+@keyframes leadA{0%,46%{opacity:1}50%,100%{opacity:0}}
+@keyframes downA{0%,46%{opacity:0}50%,100%{opacity:1}}
+@keyframes candC{0%,49%{opacity:0}51%,55%{opacity:1}52%,54%{opacity:.2}57%,100%{opacity:0}}
+@keyframes leadC{0%,55%{opacity:0}58%,100%{opacity:1}}
+@keyframes hbA{0%,2%{opacity:0}4%,44%{opacity:1}46%,100%{opacity:0}}
+@keyframes vote{0%,50%{opacity:0}51%,56%{opacity:1}58%,100%{opacity:0}}
+@keyframes hbC{0%,58%{opacity:0}60%,98%{opacity:1}100%{opacity:0}}
+@keyframes cap1{0%,46%{opacity:1}49%,100%{opacity:0}}
+@keyframes cap2{0%,47%{opacity:0}50%,56%{opacity:1}58%,100%{opacity:0}}
+@keyframes cap3{0%,57%{opacity:0}60%,98%{opacity:1}100%{opacity:0}}
+.T{animation-duration:16s;animation-iteration-count:infinite;animation-timing-function:linear}
+"""
 
 
-def lore():
-    H = 200
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="{DEEP}" stroke="{SLATE}"/>'
-    body += spores(14, 20, W - 20, 60, H, 21)
-    lines = [
-        "Beneath the surface lies a kingdom of half-built engines and long nights.",
-        "Its wanderer trains models, teaches machines to agree, and sends small agents",
-        "down into the dark to trade, remember and report back.",
-    ]
-    for i, s in enumerate(lines):
-        body += t(W / 2, 62 + i * 34, s, 21, "#cfd8e8", BODY, extra=ITALIC)
-    body += t(W / 2, 172, "— inscription found at the entrance", 13, MIST, SERIF, spacing=3)
-    write("lore.svg", svg(W, H, body, "Lore: who Suryansh is"))
+def pulses(src, dsts, color, dur, cls):
+    out = f'<g class="T" style="animation-name:{cls}">'
+    for i, d in enumerate(dsts):
+        out += (f'<circle r="4" fill="{color}" filter="url(#light)"><animateMotion dur="{dur}s" '
+                f'begin="{i * .12:.2f}s" repeatCount="indefinite" path="M{src[0]},{src[1]} L{d[0]},{d[1]}"/></circle>')
+    return out + "</g>"
 
 
-REGIONS = [
-    # ornate name, repo, one-liner, centre, radii, tint
-    ("THE CONSENSUS DEPTHS", "raftkv", "Raft from scratch in Go", (250, 190), (150, 92), SOUL),
-    ("THE HIVE ARCHIVE", "hivemind", "graph memory for AI agents", (600, 140), (150, 80), LANTERN),
-    ("THE TRADING HALLS", "agentic-trading-desk", "agents trading over MCP", (945, 205), (165, 95), MOSS),
-    ("MERKEL REX EXCHANGE", "Cryptocurrency-Trading-Platform-", "C++ order-book engine", (790, 425), (140, 72), EMBER),
-    ("HALL OF FOUR SENSES", "Multimodal-Sentiment-Analysis", "text · face · voice · video", (440, 405), (150, 78), VIOLET),
-    ("THE TRAFFIC WASTES", "Traffic-Forecast", "geohash demand forecasting", (150, 430), (110, 64), MIST),
-]
-PATHS = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 5), (0, 5), (1, 4)]
+def chamber_raft():
+    H = 500
+    b = hollow(20, 10, W - 20, H - 10, 21, FIELD["raft"])
+    b += spores(14, 40, W - 40, 120, H - 20, 22)
+    # text on the left
+    b += text(70, 132, "RaftKV", 60, INK, weight="600")
+    b += text(72, 182, "Machines that agree.", 30, SOUL)
+    b += lines(72, 240, ["A fault-tolerant key-value store on Raft,",
+                         "written from scratch in Go.",
+                         "Kill the leader: a new one is elected in",
+                         "150–300 ms and no acknowledged write",
+                         "is lost. Partition it: nothing splits."], 23, INK)
+    b += text(72, 446, "Group commit: 3× throughput, 4.5× lower p99", 20, DIM)
+    # five nodes on stone pillars
+    nodes = [(650, 320), (770, 220), (905, 180), (1040, 220), (1120, 330)]
+    A, C = nodes[0], nodes[2]
+    floor = H - 26
+    for i, (x, y) in enumerate(nodes):
+        b += f'<path d="M{x - 16},{floor} L{x - 11},{y + 18} L{x + 11},{y + 18} L{x + 16},{floor} Z" fill="{STEP["raft"]}"/>'
+        b += f'<rect x="{x - 20}" y="{y + 12}" width="40" height="9" fill="{STEP["raft"]}"/>'
+        b += text(x, floor - 14, f"node {i + 1}", 19, DIM, "middle")
+    # links (the cluster's network), faint
+    for i, p in enumerate(nodes):
+        for q in nodes[i + 1:]:
+            b += f'<line x1="{p[0]}" y1="{p[1]}" x2="{q[0]}" y2="{q[1]}" stroke="{SOUL}" stroke-opacity=".12" stroke-width="1.5"/>'
+    b += pulses(A, [n for n in nodes if n != A], LANTERN, 1.3, "hbA")
+    b += pulses(C, [n for n in nodes if n not in (A, C)], SOUL, .8, "vote")
+    b += pulses(C, [n for n in nodes if n not in (A, C)], LANTERN, 1.3, "hbC")
+    for x, y in nodes:  # follower lights
+        if (x, y) not in (A, C):
+            b += (f'<circle cx="{x}" cy="{y}" r="22" fill="url(#coldpool)" class="br"/>'
+                  f'<circle cx="{x}" cy="{y}" r="7" fill="{SOUL}" filter="url(#light)"/>')
+    # node 1: leader, then down
+    b += (f'<g class="T" style="animation-name:leadA"><circle cx="{A[0]}" cy="{A[1]}" r="46" fill="url(#pool)" class="fl"/>'
+          f'<circle cx="{A[0]}" cy="{A[1]}" r="11" fill="{LANTERN}" filter="url(#light)"/></g>'
+          f'<g class="T" style="animation-name:downA"><circle cx="{A[0]}" cy="{A[1]}" r="8" fill="#3a3f47"/>'
+          f'<path d="M{A[0] - 6},{A[1] - 6} l12,12 M{A[0] + 6},{A[1] - 6} l-12,12" stroke="{EMBER}" stroke-width="2"/></g>')
+    # node 3: follower, candidate, leader
+    b += (f'<g class="T" style="animation-name:cap1"><circle cx="{C[0]}" cy="{C[1]}" r="7" fill="{SOUL}" filter="url(#light)"/></g>'
+          f'<g class="T" style="animation-name:candC"><circle cx="{C[0]}" cy="{C[1]}" r="9" fill="{INK}" filter="url(#light)"/></g>'
+          f'<g class="T" style="animation-name:leadC"><circle cx="{C[0]}" cy="{C[1]}" r="46" fill="url(#pool)" class="fl"/>'
+          f'<circle cx="{C[0]}" cy="{C[1]}" r="11" fill="{LANTERN}" filter="url(#light)"/></g>')
+    # the running caption
+    cx, cy = 885, 96
+    b += (f'<g class="T" style="animation-name:cap1">{text(cx, cy, "Node 1 leads term 7 and sends heartbeats", 22, INK, "middle")}</g>'
+          f'<g class="T" style="animation-name:cap2">{text(cx, cy, "Node 1 is down. Node 3 asks for votes", 22, EMBER, "middle")}</g>'
+          f'<g class="T" style="animation-name:cap3">{text(cx, cy, "Node 3 wins term 8. No write was lost", 22, LANTERN, "middle")}</g>')
+    write("chamber-raftkv.svg", svg(H, b, "RaftKV: five nodes elect a new leader when the old one fails", RAFT_CSS))
 
 
-def world_map():
-    H = 540
-    body = f"<defs>{defs_common()}<style>{css_common()}</style>"
-    body += f"""<radialGradient id="parch" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#121b33"/>
-  <stop offset="1" stop-color="{ABYSS}"/></radialGradient></defs>"""
-    body += f'<rect width="{W}" height="{H}" rx="14" fill="url(#parch)"/>'
-    body += f'<rect width="{W}" height="{H}" rx="14" filter="url(#grain)"/>'
-    # faint grid of a cartographer's sheet
-    for x in range(60, W, 60):
-        body += f'<line x1="{x}" y1="0" x2="{x}" y2="{H}" stroke="{SLATE}" stroke-width=".5" opacity=".5"/>'
-    for y in range(60, H, 60):
-        body += f'<line x1="0" y1="{y}" x2="{W}" y2="{y}" stroke="{SLATE}" stroke-width=".5" opacity=".5"/>'
-    # tunnels between areas
-    for a, b in PATHS:
-        (x1, y1), (x2, y2) = REGIONS[a][3], REGIONS[b][3]
-        mx, my = (x1 + x2) / 2 + (y2 - y1) * .12, (y1 + y2) / 2 - (x2 - x1) * .08
-        body += (f'<path d="M{x1},{y1} Q{mx:.0f},{my:.0f} {x2},{y2}" fill="none" stroke="{INK}" '
-                 f'stroke-width="9" stroke-linecap="round"/>'
-                 f'<path d="M{x1},{y1} Q{mx:.0f},{my:.0f} {x2},{y2}" fill="none" stroke="{MIST}" '
-                 f'stroke-width="1.2" stroke-dasharray="3 7" opacity=".7"/>')
-    for i, (name, repo, line, (cx, cy), (rx, ry), tint) in enumerate(REGIONS):
-        d = blob(cx, cy, rx, ry, 100 + i)
-        body += f'<path d="{d}" fill="{STONE}"/>'
-        body += (f'<path d="{d}" fill="{tint}" fill-opacity=".08" stroke="{tint}" stroke-opacity=".55" '
-                 f'stroke-width="1.6" stroke-dasharray="7 4"/>')
-        body += t(cx, cy - 6, name, 20, BONE, SERIF, spacing=3, weight="600")
-        body += t(cx, cy + 20, repo if len(repo) < 26 else repo[:24] + "…", 16, tint, BODY)
-        body += t(cx, cy + 42, line, 16, MIST, BODY, extra=ITALIC)
-        body += (f'<circle cx="{cx}" cy="{cy - 44}" r="10" fill="{tint}" opacity=".25" class="pu" '
-                 f'style="animation-delay:-{i * .45:.2f}s"/>'
-                 f'<circle cx="{cx}" cy="{cy - 44}" r="3.5" fill="{tint}" filter="url(#glow)"/>')
-    # "you are here" on the newest area
-    hx, hy = REGIONS[1][3]
-    body += (f'<g class="bl"><path d="M{hx + 118},{hy - 64} l10,-18 l10,18 Z" fill="{LANTERN}"/></g>'
-             + t(hx + 128, hy - 90, "YOU ARE HERE", 11, LANTERN, SERIF, spacing=3))
-    # compass rose
-    ccx, ccy = 1090, 455
-    body += (f'<g opacity=".8"><circle cx="{ccx}" cy="{ccy}" r="36" fill="none" stroke="{INK}" stroke-width="1.2"/>'
-             f'<path d="M{ccx},{ccy - 46} L{ccx + 7},{ccy} L{ccx},{ccy + 46} L{ccx - 7},{ccy} Z" fill="{MIST}"/>'
-             f'<path d="M{ccx - 46},{ccy} L{ccx},{ccy - 7} L{ccx + 46},{ccy} L{ccx},{ccy + 7} Z" fill="{INK}"/>'
-             f'{t(ccx, ccy - 52, "N", 12, BONE, SERIF)}</g>')
-    body += t(40, 40, "CARTOGRAPHER'S MAP  ·  KNOWN REGIONS", 13, MIST, SERIF, "start", spacing=4)
-    body += spores(18, 0, W, 80, H, 31)
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{SLATE}"/>'
-    write("map.svg", svg(W, H, body, "Map of Suryansh's projects"))
+# ── chamber two: Hivemind, agents writing to a shared memory graph ──────────────────────────────
+def hexagon(cx, cy, r):
+    return " ".join(f"{cx + r * math.cos(math.pi / 3 * k + math.pi / 6):.1f},"
+                    f"{cy + r * math.sin(math.pi / 3 * k + math.pi / 6):.1f}" for k in range(6))
 
 
-PROJECTS = [
-    dict(slug="raftkv", region="THE CONSENSUS DEPTHS", name="RaftKV", tint=SOUL, live=True,
-         lines=["Fault-tolerant, strongly consistent key-value store on Raft, from scratch in Go",
-                "with zero dependencies. Kill the leader: a new one is elected in ~150–300 ms",
-                "without losing an acknowledged write. Partition it: no split-brain."],
-         chips=["Go", "Pre-Vote", "check-quorum", "CRC32 WAL", "linearizable reads"],
-         stat=("3×", "throughput from group commit")),
-    dict(slug="hivemind", region="THE HIVE ARCHIVE", name="Hivemind", tint=LANTERN, live=True,
-         lines=["Shared, time-aware graph memory for teams of AI coding agents (Claude Code,",
-                "Cursor, Codex) on FalkorDB. Agents learn procedures by watching each other,",
-                "see who is editing what, and never make the same mistake twice."],
-         chips=["Python", "FalkorDB", "MCP", "Claude Code hooks", "Graph Hacks"],
-         stat=("1×", "every mistake, made only once")),
-    dict(slug="agentic-trading-desk", region="THE TRADING HALLS", name="Agentic Trading Desk",
-         tint=MOSS, live=True,
-         lines=["An orchestrator delegates to analyst, risk and execution agents that trade on",
-                "a C++ order-book simulator exposed as an MCP server. Every order passes hard",
-                "risk limits; an eval harness scores PnL, breaches and failed tool calls in CI."],
-         chips=["Claude Agent SDK", "MCP", "C++", "Docker", "eval harness"],
-         stat=("3,540", "real orders replayed")),
-]
+def chamber_hive():
+    H = 500
+    rnd = random.Random(31)
+    b = hollow(20, 10, W - 20, H - 10, 32, FIELD["hive"])
+    b += spores(12, 40, W - 40, 120, H - 20, 33, (LANTERN, LANTERN, INK))
+    # honeycomb on the left
+    ox, oy, r = 330, 245, 34
+    cells = []
+    for q in range(-3, 4):
+        for s in range(-2, 3):
+            x = ox + r * math.sqrt(3) * (q + (s % 2) * .5)
+            y = oy + r * 1.5 * s
+            if math.hypot(x - ox, (y - oy) * 1.25) < 190:
+                cells.append((x, y))
+    def near(i, j):
+        return 0 < math.dist(cells[i], cells[j]) < r * 2.1
+
+    lit = [len(cells) // 2]
+    while len(lit) < 9:  # a random walk through adjacent cells, so each edge is short
+        options = [j for j in range(len(cells)) if near(lit[-1], j) and j not in lit]
+        if not options:
+            break
+        lit.append(rnd.choice(options))
+    for i, (x, y) in enumerate(cells):
+        b += f'<polygon points="{hexagon(x, y, r - 3)}" fill="{STEP["hive"]}"/>'
+    for n, i in enumerate(lit):  # memories being written: each cell warms, holds, cools
+        x, y = cells[i]
+        b += (f'<polygon points="{hexagon(x, y, r - 3)}" fill="{LANTERN}" opacity="0">'
+              f'<animate attributeName="opacity" values="0;0;.75;.75;0" keyTimes="0;.08;.18;.75;1" dur="12s" '
+              f'begin="{-n * 1.3:.1f}s" repeatCount="indefinite"/></polygon>')
+    # graph edges between remembered cells, drawn and erased
+    for n in range(len(lit) - 1):
+        (x1, y1), (x2, y2) = cells[lit[n]], cells[lit[n + 1]]
+        ln = math.hypot(x2 - x1, y2 - y1)
+        b += (f'<line x1="{x1:.0f}" y1="{y1:.0f}" x2="{x2:.0f}" y2="{y2:.0f}" stroke="{INK}" stroke-width="3" '
+              f'stroke-linecap="round" stroke-dasharray="{ln:.0f}" stroke-dashoffset="{ln:.0f}" opacity=".8">'
+              f'<animate attributeName="stroke-dashoffset" values="{ln:.0f};{ln:.0f};0;0;{ln:.0f}" keyTimes="0;.2;.35;.8;1" '
+              f'dur="12s" begin="{-n * 1.7:.1f}s" repeatCount="indefinite"/></line>')
+    # three agents flying between cells
+    for k, dur in enumerate((9, 11, 13)):
+        route = rnd.sample(cells, 5)
+        d = "M" + " L".join(f"{x:.0f},{y:.0f}" for x, y in route) + " Z"
+        b += (f'<g><circle r="5" fill="{SOUL}" filter="url(#light)"/><circle r="14" fill="url(#coldpool)"/>'
+              f'<animateMotion dur="{dur}s" repeatCount="indefinite" path="{d}"/></g>')
+    b += text(330, 468, "Claude Code, Cursor and Codex, one memory", 19, DIM, "middle")
+    # text on the right
+    tx = 640
+    b += text(tx, 132, "Hivemind", 60, INK, weight="600")
+    b += text(tx + 2, 182, "Agents that remember.", 30, LANTERN)
+    b += lines(tx + 2, 240, ["Shared, time-aware graph memory for",
+                             "teams of AI coding agents, in FalkorDB.",
+                             "Agents learn procedures by watching",
+                             "each other, see who is editing what,",
+                             "and make each mistake only once."], 23, INK)
+    b += text(tx + 2, 446, "Python · FalkorDB · MCP · Graph Hacks", 20, DIM)
+    write("chamber-hivemind.svg", svg(H, b, "Hivemind: agents writing memories into a shared graph"))
 
 
-def project_card(p):
-    H = 250
-    tint = p["tint"]
-    body = f"<defs>{defs_common()}<style>{css_common()}</style>"
-    body += f"""<linearGradient id="cardbg" x1="0" x2="1"><stop offset="0" stop-color="{STONE}"/>
-  <stop offset="1" stop-color="{DEEP}"/></linearGradient></defs>"""
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="url(#cardbg)" stroke="{SLATE}"/>'
-    body += f'<rect x="0" y="0" width="5" height="{H}" rx="2" fill="{tint}" opacity=".8"/>'
-    body += f'<circle cx="{W - 140}" cy="{H / 2}" r="150" fill="{tint}" opacity=".05"/>'
-    body += t(44, 46, f"AREA DISCOVERED  ·  {p['region']}", 13, tint, SERIF, "start", spacing=4)
-    body += t(44, 92, p["name"], 38, BONE, SERIF, "start", spacing=2, weight="600")
-    for i, s in enumerate(p["lines"]):
-        body += t(44, 128 + i * 25, s, 17, "#c3cee0", BODY, "start")
-    x = 44
-    for c in p["chips"]:
-        w = len(c) * 8.2 + 26
-        body += (f'<rect x="{x}" y="{H - 44}" width="{w:.0f}" height="26" rx="13" fill="none" '
-                 f'stroke="{INK}"/>' + t(x + w / 2, H - 26, c, 14, MIST, BODY))
-        x += w + 10
-    # right column: the stat and a lit lantern pin
-    sx = W - 150
-    body += (f'<circle cx="{sx}" cy="88" r="42" fill="none" stroke="{tint}" stroke-opacity=".4"/>'
-             f'<circle cx="{sx}" cy="88" r="52" fill="none" stroke="{tint}" stroke-opacity=".15" '
-             f'stroke-dasharray="2 6"/>'
-             + t(sx, 98, p["stat"][0], 28 if len(p["stat"][0]) < 4 else 22, tint, SERIF, weight="600",
-                 extra='filter="url(#glow)"')
-             + t(sx, 166, p["stat"][1], 15, MIST, BODY, extra=ITALIC))
-    if p["live"]:
-        body += (f'<circle cx="{sx - 34}" cy="{H - 31}" r="4" fill="{MOSS}" class="bl"/>'
-                 + t(sx - 22, H - 26, "LIVE DEMO  ·  ENTER  →", 12, BONE, SERIF, "start", spacing=2))
-    body += spores(8, W - 320, W - 20, 40, H, len(p["slug"]) * 17, (tint, BONE))
-    write(f"project-{p['slug']}.svg", svg(W, H, body, f"{p['name']} project card"))
+# ── chamber three: the trading desk, an order meets the risk gate ────────────────────────────────
+def chamber_desk():
+    H = 600
+    b = hollow(20, 10, W - 20, H - 10, 41, FIELD["desk"])
+    b += spores(12, 40, W - 40, 160, H - 20, 42, (MOSS, INK, SOUL))
+    b += text(70, 132, "Agentic Trading Desk", 60, INK, weight="600")
+    b += text(72, 182, "Agents that trade.", 30, MOSS)
+    b += lines(72, 238, ["An orchestrator hands work to analyst, risk and execution agents that",
+                         "trade on a C++ order book served over MCP. Every order meets hard limits."], 23, INK)
+    # the floor of the chamber: agents on posts, then the order book
+    base = H - 60
+    agents = [("analyst", 150), ("risk", 360), ("execution", 570)]
+    for name, x in agents:
+        b += (f'<path d="M{x - 18},{base} L{x - 10},{base - 120} L{x + 10},{base - 120} L{x + 18},{base} Z" fill="{STEP["desk"]}"/>'
+              f'<circle cx="{x}" cy="{base - 140}" r="34" fill="url(#coldpool)" class="br"/>'
+              f'<circle cx="{x}" cy="{base - 140}" r="8" fill="{SOUL}" filter="url(#light)"/>'
+              + text(x, base + 32, name, 20, DIM, "middle"))
+    # order book: bids (left of the spread) and asks (right), price levels as slabs
+    mx, top = 900, base - 190
+    levels = [(110, 70), (150, 120), (190, 95), (130, 160), (80, 115)]
+    for i, (bid, ask) in enumerate(levels):
+        y = top + i * 34
+        b += f'<rect x="{mx - 14 - bid}" y="{y}" width="{bid}" height="24" fill="{MOSS}" opacity="{.85 - i * .12:.2f}"/>'
+        b += f'<rect x="{mx + 14}" y="{y}" width="{ask}" height="24" fill="{EMBER}" opacity="{.85 - i * .12:.2f}"/>'
+    b += text(mx - 80, top - 18, "bids", 20, MOSS, "middle") + text(mx + 80, top - 18, "asks", 20, EMBER, "middle")
+    ay = base - 140
+    route_ok = f"M{agents[0][1]},{ay} L{agents[1][1]},{ay} L{agents[2][1]},{ay} L{mx},{top + 13}"
+    route_no = f"M{agents[0][1]},{ay} L{agents[1][1]},{ay}"
+    T = 9
+    b += f'<path d="{route_ok}" fill="none" stroke="{SOUL}" stroke-opacity=".14" stroke-width="5" stroke-linejoin="round"/>'
+    b += (f'<circle r="6" fill="{INK}" filter="url(#light)" opacity="0">'
+          f'<animateMotion dur="{T}s" repeatCount="indefinite" path="{route_ok}" keyPoints="0;1;1" keyTimes="0;.42;1" calcMode="linear"/>'
+          f'<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.42;.43;1" dur="{T}s" repeatCount="indefinite"/></circle>')
+    b += (f'<circle cx="{mx}" cy="{top + 13}" r="34" fill="url(#pool)" opacity="0">'
+          f'<animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;.41;.45;.58;1" dur="{T}s" repeatCount="indefinite"/></circle>')
+    b += (f'<circle r="6" fill="{EMBER}" filter="url(#light)" opacity="0">'
+          f'<animateMotion dur="{T}s" repeatCount="indefinite" path="{route_no}" keyPoints="0;0;1;1" keyTimes="0;.55;.72;1" calcMode="linear"/>'
+          f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;.55;.56;.72;.76;1" dur="{T}s" repeatCount="indefinite"/></circle>')
+    b += (f'<circle cx="{agents[1][1]}" cy="{ay}" r="30" fill="{EMBER}" opacity="0">'
+          f'<animate attributeName="opacity" values="0;0;.5;0;0" keyTimes="0;.71;.74;.86;1" dur="{T}s" repeatCount="indefinite"/></circle>')
+    cap = 360
+    b += (f'<g opacity="0">{text(cap, base - 196, "Order passes the risk gate and fills", 22, MOSS, "middle")}'
+          f'<animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.04;.5;.53;1" dur="{T}s" repeatCount="indefinite"/></g>'
+          f'<g opacity="0">{text(cap, base - 196, "Next order breaks a position limit: rejected", 22, EMBER, "middle")}'
+          f'<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.54;.57;.95;1" dur="{T}s" repeatCount="indefinite"/></g>')
+    b += text(1140, base + 32, "3,540 real orders replayed", 20, DIM, "end")
+    write("chamber-trading-desk.svg", svg(H, b, "Agentic Trading Desk: an order passes the risk gate and fills; the next is rejected"))
 
 
-RELICS = [
-    ("1826", "LEETCODE", "max rating · 650+ solved", SOUL, "gem"),
-    ("3★", "CODECHEF", "max rating 1621", LANTERN, "star"),
-    ("MLSS", "AMAZON", "ML Summer School '26", EMBER, "flame"),
-    ("FINAL", "META × PYTORCH", "OpenEnv grand finale", VIOLET, "crown"),
-    ("8.17", "NIT PATNA", "CGPA · CSE '27", MOSS, "key"),
-]
-
-
-def relic_icon(kind, cx, cy, c):
-    if kind == "gem":
-        return (f'<path d="M{cx},{cy - 22} L{cx + 18},{cy - 6} L{cx},{cy + 22} L{cx - 18},{cy - 6} Z" '
-                f'fill="{c}" fill-opacity=".15" stroke="{c}" stroke-width="1.6"/>'
-                f'<path d="M{cx - 18},{cy - 6} H{cx + 18} M{cx},{cy - 22} L{cx - 6},{cy - 6} L{cx},{cy + 22} '
-                f'L{cx + 6},{cy - 6} Z" fill="none" stroke="{c}" stroke-width="1" opacity=".7"/>')
-    if kind == "star":
-        pts = " ".join(f"{cx + math.cos(math.pi / 2 + i * math.pi / 5) * (20 if i % 2 == 0 else 8):.1f},"
-                       f"{cy - math.sin(math.pi / 2 + i * math.pi / 5) * (20 if i % 2 == 0 else 8):.1f}"
-                       for i in range(10))
-        return f'<polygon points="{pts}" fill="{c}" fill-opacity=".15" stroke="{c}" stroke-width="1.6"/>'
-    if kind == "flame":
-        return (f'<path d="M{cx},{cy - 24} C{cx + 18},{cy - 6} {cx + 16},{cy + 20} {cx},{cy + 20} '
-                f'C{cx - 16},{cy + 20} {cx - 18},{cy - 4} {cx - 4},{cy - 10} C{cx - 4},{cy - 2} {cx + 2},{cy} '
-                f'{cx},{cy - 24} Z" fill="{c}" fill-opacity=".15" stroke="{c}" stroke-width="1.6" class="fl"/>')
-    if kind == "crown":
-        return (f'<path d="M{cx - 20},{cy + 14} L{cx - 22},{cy - 12} L{cx - 9},{cy} L{cx},{cy - 20} '
-                f'L{cx + 9},{cy} L{cx + 22},{cy - 12} L{cx + 20},{cy + 14} Z" fill="{c}" fill-opacity=".15" '
-                f'stroke="{c}" stroke-width="1.6"/>')
-    return (f'<circle cx="{cx - 8}" cy="{cy - 8}" r="10" fill="{c}" fill-opacity=".15" stroke="{c}" '
-            f'stroke-width="1.6"/><path d="M{cx - 1},{cy - 1} L{cx + 18},{cy + 18} M{cx + 10},{cy + 10} '
-            f'l6,-6 M{cx + 15},{cy + 15} l5,-5" stroke="{c}" stroke-width="1.8" fill="none"/>')
-
-
+# ── relics: one number carved large, the rest set beside it ──────────────────────────────────────
 def relics():
-    H = 270
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="{DEEP}" stroke="{SLATE}"/>'
-    step = (W - 80) / len(RELICS)
-    for i, (big, name, sub, c, kind) in enumerate(RELICS):
-        cx = 40 + step * (i + .5)
-        body += (f'<circle cx="{cx}" cy="86" r="50" fill="url(#soullight)" opacity=".35" class="pu" '
-                 f'style="animation-delay:-{i * .6:.1f}s"/>'
-                 f'<circle cx="{cx}" cy="86" r="44" fill="{STONE}" stroke="{INK}" stroke-width="1.4"/>'
-                 f'<circle cx="{cx}" cy="86" r="38" fill="none" stroke="{c}" stroke-opacity=".3" '
-                 f'stroke-dasharray="1 5"/>')
-        body += f'<g filter="url(#glow)">{relic_icon(kind, cx, 86, c)}</g>'
-        body += t(cx, 172, big, 30, BONE, SERIF, weight="600", spacing=1)
-        body += t(cx, 202, name, 15, c, SERIF, spacing=3)
-        body += t(cx, 230, sub, 17, MIST, BODY, extra=ITALIC)
-    body += spores(12, 0, W, 100, H, 51)
-    write("relics.svg", svg(W, H, body, "Relics: competitive programming and achievements"))
-
-
-JOURNAL = [
-    ("Machine Learning Engineer Intern", "Trialshopy", "QUEST COMPLETE", MOSS),
-    ("Data Scientist Intern", "Prodigy Infotech", "QUEST COMPLETE", MOSS),
-    ("Your team here?", "an open slot in the party", "SEND A RAVEN  ↓", LANTERN),
-]
-
-
-def journal():
-    H = 250
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="{DEEP}" stroke="{SLATE}"/>'
-    body += f'<line x1="70" y1="40" x2="70" y2="{H - 40}" stroke="{INK}" stroke-width="1.4" stroke-dasharray="2 6"/>'
-    for i, (role, org, status, c) in enumerate(JOURNAL):
-        y = 62 + i * 64
-        open_ = i == len(JOURNAL) - 1
-        body += (f'<path d="M70,{y - 10} L80,{y} L70,{y + 10} L60,{y} Z" fill="{DEEP if open_ else c}" '
-                 f'stroke="{c}" stroke-width="1.4"' + (' class="bl"/>' if open_ else "/>"))
-        body += t(104, y + 7, role, 22, BONE if not open_ else MIST, SERIF, "start", spacing=1, weight="600")
-        body += t(104 + len(role) * 14.2 + 22, y + 6, "— " + org, 17, MIST, BODY, "start",
-                  extra=ITALIC)
-        body += t(W - 60, y + 6, status, 13, c, SERIF, "end", spacing=3)
-        if not open_:
-            body += f'<line x1="104" y1="{y + 30}" x2="{W - 60}" y2="{y + 30}" stroke="{SLATE}"/>'
-    write("journal.svg", svg(W, H, body, "Journal: experience"))
-
-
-INVENTORY = ["C++", "Python", "Go", "JavaScript", "SQL", "PyTorch", "Hugging Face", "Django",
-             "MERN", "FalkorDB", "MCP", "Docker"]
-LANG_COLORS = {"Python": SOUL, "JavaScript": LANTERN, "Go": MOSS, "C++": EMBER, "Dockerfile": VIOLET,
-               "Shell": MIST, "TypeScript": SOUL}
-
-
-def inventory(langs, n_repos):
     H = 400
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="{DEEP}" stroke="{SLATE}"/>'
-    # left: equipment slots
-    body += t(40, 48, "EQUIPPED", 13, MIST, SERIF, "start", spacing=4)
-    cols, sw, sh, gap = 4, 128, 58, 12
-    for i, name in enumerate(INVENTORY):
-        x, y = 40 + (i % cols) * (sw + gap), 68 + (i // cols) * (sh + gap)
-        body += (f'<rect x="{x}" y="{y}" width="{sw}" height="{sh}" rx="8" fill="{STONE}" stroke="{INK}"/>'
-                 f'<path d="M{x + 6},{y + 6} h10 M{x + 6},{y + 6} v10 M{x + sw - 6},{y + sh - 6} h-10 '
-                 f'M{x + sw - 6},{y + sh - 6} v-10" stroke="{MIST}" stroke-width="1" opacity=".5"/>'
-                 + t(x + sw / 2, y + sh / 2 + 6, name, 17 if len(name) < 11 else 15, BONE, BODY))
-    body += t(40, 300, "Also wielded: computer vision, NLP, affective computing", 15, MIST, BODY, "start", extra=ITALIC)
-    body += t(40, 322, "(EEG and eye-tracking), gradient boosting, Raft, Flask.", 15, MIST, BODY, "start", extra=ITALIC)
-    # right: soul essence (real language bytes)
-    ex = 660
-    body += t(ex, 48, "SOUL ESSENCE  ·  CODE BY LANGUAGE", 13, MIST, SERIF, "start", spacing=4)
-    top = sorted(langs.items(), key=lambda kv: -kv[1])[:6]
+    b = hollow(20, 10, W - 20, H - 10, 51, FIELD["relics"])
+    b += f'<circle cx="250" cy="215" r="190" fill="url(#pool)" opacity=".35" class="fl"/>'
+    b += text(64, 250, "1826", 190, INK, weight="600")
+    b += text(72, 312, "LeetCode, max rating.", 24, LANTERN)
+    b += text(72, 350, "650+ problems solved.", 22, DIM)
+    rows = [("3★ CodeChef", "max rating 1621"),
+            ("Amazon ML Summer School", "selected, 2026"),
+            ("Meta × PyTorch OpenEnv", "hackathon grand finale, Bangalore"),
+            ("NIT Patna, CSE '27", "CGPA 8.17")]
+    for i, (big, small) in enumerate(rows):
+        y = 100 + i * 78
+        b += text(640, y, big, 32, INK, weight="600") + text(642, y + 32, small, 21, DIM)
+    b += spores(10, 40, W - 40, 100, H - 20, 52, (LANTERN, INK))
+    write("relics.svg", svg(H, b, "Relics: LeetCode 1826, CodeChef 3 star, Amazon MLSS 2026, Meta PyTorch OpenEnv finalist, NIT Patna CGPA 8.17"))
+
+
+# ── what I've done and what I carry ──────────────────────────────────────────────────────────────
+LANG_COLORS = {"Python": SOUL, "JavaScript": LANTERN, "Go": MOSS, "C++": EMBER, "TypeScript": "#c9b8ff"}
+
+
+def carried(langs, n_repos):
+    H = 500
+    b = hollow(20, 10, W - 20, H - 10, 61, FIELD["carry"])
+    b += text(70, 104, "Quests completed", 30, INK, weight="600")
+    for i, (role, org) in enumerate([("Machine Learning Engineer Intern", "Trialshopy"),
+                                      ("Data Scientist Intern", "Prodigy Infotech")]):
+        y = 158 + i * 72
+        b += text(72, y, role, 23, INK) + text(72, y + 30, org, 20, DIM)
+    b += text(72, 320, "Next quest: open. Send a raven below.", 22, LANTERN)
+    b += text(640, 104, "Carried", 30, INK, weight="600")
+    b += lines(642, 150, ["C++, Python, Go, JavaScript, SQL", "PyTorch, Hugging Face, scikit-learn",
+                          "Django, MERN, FalkorDB, Docker, MCP", "Computer vision, NLP, affective",
+                          "computing (EEG and eye-tracking)"], 22, INK, lead=1.5)
+    # one segmented bar of real language bytes
+    top = sorted(langs.items(), key=lambda kv: -kv[1])[:5]
     total = sum(v for _, v in top) or 1
-    for i, (name, v) in enumerate(top):
-        y = 84 + i * 42
-        pct = 100 * v / total
-        c = LANG_COLORS.get(name, MIST)
-        bw = 300 * v / top[0][1]
-        body += t(ex, y + 5, name, 16, BONE, BODY, "start")
-        body += (f'<rect x="{ex + 120}" y="{y - 8}" width="300" height="14" rx="7" fill="{STONE}" stroke="{INK}"/>'
-                 f'<rect x="{ex + 120}" y="{y - 8}" width="{max(bw, 8):.0f}" height="14" rx="7" fill="{c}" '
-                 f'fill-opacity=".8" filter="url(#glow)"/>'
-                 + t(W - 40, y + 5, f"{pct:.1f}%", 14, MIST, BODY, "end"))
-    body += t(ex, 350, f"Measured across {n_repos} public repositories; notebooks and markup left out.",
-              15, MIST, BODY, "start", extra=ITALIC)
-    body += t(ex, 372, "Refreshed daily by a workflow in this repo.", 13, MIST, BODY, "start",
-              extra=ITALIC)
-    write("inventory.svg", svg(W, H, body, "Inventory: stack and language breakdown"))
+    x, y, width = 72, 398, W - 144
+    for name, v in top:
+        w = width * v / total
+        c = LANG_COLORS.get(name, DIM)
+        b += f'<rect x="{x:.1f}" y="{y}" width="{max(w - 3, 2):.1f}" height="16" fill="{c}"/>'
+        if w > 70:
+            b += text(x, y + 44, f"{name} {100 * v / total:.0f}%", 19, INK)
+        x += w
+    b += text(W - 72, y - 16, f"code by language across {n_repos} repos, refreshed daily", 18, DIM, "end")
+    write("carried.svg", svg(H, b, "Quests completed and what I carry: experience, stack and languages"))
 
 
-def footer():
-    H = 260
-    body = f"<defs>{defs_common()}<style>{css_common()}</style></defs>"
-    body += f'<rect width="{W}" height="{H}" rx="14" fill="{ABYSS}"/>'
-    body += f'<path d="{jagged(W, H - 30, 12, 34, 61, False)}" fill="#0a1022"/>'
-    # resting stone with the wanderer seated beside the lantern
-    body += f'<path d="M520,{H - 34} q80,-26 160,0 Z" fill="{STONE}" stroke="{INK}"/>'
-    body += wanderer(600, H - 64, 1.1)
-    body += spores(24, 400, 800, 80, H, 71, (LANTERN, LANTERN, SOUL))
-    body += t(W / 2, 60, "YOU REST BY THE LANTERN.  PROGRESS SAVED.", 18, BONE, SERIF, spacing=5)
-    body += f'<g class="bl">{t(W / 2, 92, "thank you for exploring", 15, MIST, BODY, extra=ITALIC)}</g>'
-    body += f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{SLATE}"/>'
-    write("footer.svg", svg(W, H, body, "Footer: progress saved"))
+# ── the bottom of the cave: name returns, progress saved ────────────────────────────────────────
+def rest():
+    H = 380
+    b = hollow(0, 0, W, H, 71, FIELD["rest"], roof=34, floor=4)
+    b += text(W / 2, 262, "Suryansh Sharma", 150, STEP["rest"], "middle", weight="600")
+    b += f'<path d="M0,{H} L0,{H - 70} C300,{H - 92} 900,{H - 80} {W},{H - 96} L{W},{H} Z" fill="{ROCK}"/>'
+    b += f'<path d="M520,{H - 84} q70,-30 150,-6 L676,{H - 76} Z" fill="#141c2c"/>'
+    b += wanderer(600, H - 118, 1.25, seated=True)
+    b += spores(22, 380, 820, 80, H - 60, 72, (LANTERN, LANTERN, SOUL))
+    b += text(W / 2, 74, "You rest by the lantern. Progress saved.", 24, INK, "middle")
+    b += text(W / 2, 112, "Thank you for coming this deep.", 21, DIM, "middle", italic=True)
+    write("rest.svg", svg(H, b, "You rest by the lantern. Progress saved."))
 
 
 def main():
     ASSETS.mkdir(exist_ok=True)
+    for old in ASSETS.glob("*.svg"):
+        old.unlink()
     langs, n_repos = fetch_stats("--offline" in sys.argv)
     hero()
-    lore()
-    for name, title in [("map", "THE MAP"), ("areas", "AREAS DISCOVERED"), ("relics", "RELICS"),
-                        ("journal", "JOURNAL"), ("inventory", "INVENTORY"), ("raven", "SEND A RAVEN")]:
-        header(name, title)
-    world_map()
-    for p in PROJECTS:
-        project_card(p)
+    chamber_raft()
+    chamber_hive()
+    chamber_desk()
     relics()
-    journal()
-    inventory(langs, n_repos)
-    footer()
+    carried(langs, n_repos)
+    rest()
 
 
 if __name__ == "__main__":
