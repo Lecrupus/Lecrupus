@@ -37,7 +37,13 @@
 </details>
 
 <a id="relics"></a>
-<img src="./assets/relics.svg" width="100%" alt="LeetCode max rating 1826 with 750+ problems solved. CodeChef 3 star, max 1621. Amazon ML Summer School 2026. Meta × PyTorch OpenEnv hackathon grand finale. NIT Patna CSE '27, CGPA 8.17." />
+<a href="https://leetcode.com/u/lecrupusgod/"><img src="./assets/relics.svg" width="100%" alt="LeetCode max rating 1839 with 750+ problems solved. Codeforces Expert, max 1605. CodeChef 3 star, max 1621. Amazon ML Summer School 2026, top 1.8%. Google Big Code 2026, top 1,500 globally. Meta × PyTorch OpenEnv hackathon grand finale. NIT Patna CSE '27, CGPA 8.17." /></a>
+
+<p align="center"><b>Duel me:</b> &nbsp;
+<a href="https://leetcode.com/u/lecrupusgod/">LeetCode</a> &nbsp;·&nbsp;
+<a href="https://codeforces.com/profile/carlogeek123">Codeforces</a> &nbsp;·&nbsp;
+<a href="https://www.codechef.com/users/angel_ants">CodeChef</a>
+</p>
 
 <img src="./assets/carried.svg" width="100%" alt="Machine Learning Engineer Intern at Trialshopy; Data Scientist Intern at Prodigy Infotech. Stack: C++, Python, Go, JavaScript, SQL, PyTorch, Hugging Face, Django, MERN, FalkorDB, Docker, MCP." />
 
@@ -46,6 +52,7 @@
 <b>Send a raven:</b> &nbsp;
 <a href="https://www.linkedin.com/in/suryansh-sharma-bbb4b5307/">LinkedIn</a> &nbsp;·&nbsp;
 <a href="mailto:suryanshs.ug23.cs@nitp.ac.in">Email</a> &nbsp;·&nbsp;
+<a href="https://huggingface.co/Lecrupus">Hugging Face</a> &nbsp;·&nbsp;
 <a href="https://github.com/Lecrupus?tab=repositories">Every repository</a>
 </p>
 

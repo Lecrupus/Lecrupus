@@ -264,7 +264,7 @@ def chamber_raft():
     b += lines(72, 240, ["A fault-tolerant key-value store on Raft,",
                          "written from scratch in Go.",
                          "Kill the leader: a new one is elected in",
-                         "150–300 ms and no acknowledged write",
+                         "130–180 ms and no acknowledged write",
                          "is lost. Partition it: nothing splits."], 23, INK)
     b += text(72, 446, "Group commit: 3× throughput, 4.5× lower p99", 20, DIM)
     # five nodes on stone pillars
@@ -419,21 +419,24 @@ def chamber_desk():
 
 # ── relics: one number carved large, the rest set beside it ──────────────────────────────────────
 def relics():
-    H = 400
+    H = 600
     b = hollow(20, 10, W - 20, H - 10, 51, FIELD["relics"])
-    b += f'<circle cx="250" cy="215" r="190" fill="url(#pool)" opacity=".35" class="fl"/>'
-    b += text(64, 250, "1826", 190, INK, weight="600")
-    b += text(72, 312, "LeetCode, max rating.", 24, LANTERN)
-    b += text(72, 350, "750+ problems solved.", 22, DIM)
-    rows = [("3★ CodeChef", "max rating 1621"),
-            ("Amazon ML Summer School", "selected, 2026"),
-            ("Meta × PyTorch OpenEnv", "hackathon grand finale, Bangalore"),
+    b += f'<circle cx="250" cy="290" r="200" fill="url(#pool)" opacity=".35" class="fl"/>'
+    b += text(64, 320, "1839", 190, INK, weight="600")
+    b += text(72, 384, "LeetCode, max rating.", 24, LANTERN)
+    b += text(72, 422, "750+ problems solved.", 22, DIM)
+    rows = [("Codeforces Expert", "max rating 1605"),
+            ("3★ CodeChef", "max rating 1621"),
+            ("Amazon ML Summer School", "top 1.8% of 1.6 lakh+ applicants, 2026"),
+            ("Google Big Code", "top 1,500 of 15,000+ globally, 2026"),
+            ("Meta × PyTorch OpenEnv", "hackathon grand finale, Bengaluru"),
             ("NIT Patna, CSE '27", "CGPA 8.17")]
     for i, (big, small) in enumerate(rows):
-        y = 100 + i * 78
+        y = 96 + i * 82
         b += text(640, y, big, 32, INK, weight="600") + text(642, y + 32, small, 21, DIM)
     b += spores(10, 40, W - 40, 100, H - 20, 52, (LANTERN, INK))
-    write("relics.svg", svg(H, b, "Relics: LeetCode 1826, CodeChef 3 star, Amazon MLSS 2026, Meta PyTorch OpenEnv finalist, NIT Patna CGPA 8.17"))
+    write("relics.svg", svg(H, b, "Relics: LeetCode 1839, Codeforces Expert 1605, CodeChef 3 star, Amazon MLSS 2026, "
+                                  "Google Big Code 2026, Meta PyTorch OpenEnv finalist, NIT Patna CGPA 8.17"))
 
 
 # ── what I've done and what I carry ──────────────────────────────────────────────────────────────
