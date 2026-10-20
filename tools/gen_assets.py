@@ -224,10 +224,10 @@ def hero():
     # left column: the name, set very large; one claim; one line of who
     b += text(64, 236, "Suryansh", 132, INK, weight="600")
     b += text(64, 372, "Sharma", 132, INK, weight="600")
-    b += text(68, 448, "I build systems that agree,", 30, LANTERN)
-    b += text(68, 490, "remember and trade.", 30, LANTERN)
+    b += text(68, 448, "The deeper the system,", 30, LANTERN)
+    b += text(68, 490, "the brighter the lantern.", 30, LANTERN)
     b += text(68, 548, "ML and distributed systems · NIT Patna, CSE '27", 22, DIM)
-    write("hero.svg", svg(H, b, "Suryansh Sharma. I build systems that agree, remember and trade."))
+    write("hero.svg", svg(H, b, "Suryansh Sharma. The deeper the system, the brighter the lantern."))
 
 
 # ── chamber one: RaftKV, five nodes electing a leader ───────────────────────────────────────────
@@ -424,7 +424,7 @@ def relics():
     b += f'<circle cx="250" cy="215" r="190" fill="url(#pool)" opacity=".35" class="fl"/>'
     b += text(64, 250, "1826", 190, INK, weight="600")
     b += text(72, 312, "LeetCode, max rating.", 24, LANTERN)
-    b += text(72, 350, "650+ problems solved.", 22, DIM)
+    b += text(72, 350, "750+ problems solved.", 22, DIM)
     rows = [("3★ CodeChef", "max rating 1621"),
             ("Amazon ML Summer School", "selected, 2026"),
             ("Meta × PyTorch OpenEnv", "hackathon grand finale, Bangalore"),
